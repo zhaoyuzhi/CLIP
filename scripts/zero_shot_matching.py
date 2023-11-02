@@ -12,12 +12,13 @@ text = clip.tokenize(text_list).to(device)
 with torch.no_grad():
     image_features = model.encode_image(image)
     text_features = model.encode_text(text)
-
+    
     image_features = image_features / image_features.norm(dim = -1, keep_dims = True)
     text_features = text_features / text_features.norm(dim = -1, keep_dims = True)
     
-    clip_scores = torch.matmul(image_features, text_features.T)
+    similarity = (100.0 * image_features @ text_features.T).softmax(dim=-1)
+    values, indices = similarity[0].topk(5)
 
-clip_scores = clip_scores.cpu().numpy()[0]
-print("Text list:", text_list)
-print("CLIP score:", clip_scores)
+print("Top predictions:")
+for value, index in zip(values, indices):
+    print("%s: %.2f" % (text_list[index], 100 * value.item()))
